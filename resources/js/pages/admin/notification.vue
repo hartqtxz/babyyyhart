@@ -74,11 +74,19 @@ onMounted(() => {
 const fetchNotifications = async () => {
     try {
         isLoading.value = true
+        console.log('Fetching notifications for authenticated user...')
         const response = await api.get('/notifications')
+        console.log('Notifications response:', response.data)
         notifications.value = response.data
+        if (response.data.length === 0) {
+            console.warn('No notifications returned from API')
+        }
     } catch (error) {
         console.error('Error fetching notifications:', error)
-        alert('Failed to fetch notifications')
+        if (error.response) {
+            console.error('API Error:', error.response.status, error.response.data)
+        }
+        alert('Failed to fetch notifications. Check console for details.')
     } finally {
         isLoading.value = false
     }
@@ -86,6 +94,9 @@ const fetchNotifications = async () => {
 
 const getNotificationColor = (type) => {
     switch(type) {
+        case 'new_application': return 'bg-info'
+        case 'application_approved': return 'bg-success'
+        case 'application_rejected': return 'bg-danger'
         case 'Application': return 'bg-info'
         case 'Success': return 'bg-success'
         case 'Message': return 'bg-primary'

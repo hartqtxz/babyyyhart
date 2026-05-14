@@ -69,14 +69,38 @@ class ApplicantController extends Controller
         $jobPosting = $applicant->jobPosting;
         $applicantUser = $applicant->user;
         
-        if ($jobPosting && $jobPosting->user) {
-            Notification::create([
-                'user_id' => $jobPosting->user_id,
-                'title' => 'New Application Received',
-                'type' => 'new_application',
-                'message' => "{$applicantUser->name} has applied for your job posting: {$jobPosting->title}",
-                'is_read' => false,
+        if ($jobPosting) {
+            \Log::info('Job posting found for notification', [
+                'job_posting_id' => $jobPosting->id,
+                'job_posting_user_id' => $jobPosting->user_id,
+                'job_posting_title' => $jobPosting->title,
+                'applicant_user_id' => $applicant->user_id,
             ]);
+
+            if ($jobPosting->user_id) {
+                try {
+                    Notification::create([
+                        'user_id' => $jobPosting->user_id,
+                        'title' => 'New Application Received',
+                        'type' => 'new_application',
+                        'message' => "{$applicantUser->name} has applied for your job posting: {$jobPosting->title}",
+                        'is_read' => false,
+                    ]);
+                    \Log::info('Notification created successfully', [
+                        'user_id' => $jobPosting->user_id,
+                        'title' => 'New Application Received',
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to create notification', [
+                        'error' => $e->getMessage(),
+                        'user_id' => $jobPosting->user_id,
+                    ]);
+                }
+            } else {
+                \Log::warning('Job posting has no user_id', ['job_posting_id' => $jobPosting->id]);
+            }
+        } else {
+            \Log::warning('Job posting not found for application', ['job_posting_id' => $validated['job_posting_id']]);
         }
 
         return response()->json($applicant, 201);

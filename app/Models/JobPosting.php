@@ -25,9 +25,42 @@ class JobPosting extends Model
         'status',
     ];
 
+    protected $appends = [
+        'salary',
+        'company',
+        'posted_by_name',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getSalaryAttribute(): ?string
+    {
+        if ($this->salary_min && $this->salary_max) {
+            return '₱' . number_format($this->salary_min, 2) . ' - ₱' . number_format($this->salary_max, 2);
+        }
+
+        if ($this->salary_min) {
+            return '₱' . number_format($this->salary_min, 2);
+        }
+
+        if ($this->salary_max) {
+            return '₱' . number_format($this->salary_max, 2);
+        }
+
+        return null;
+    }
+
+    public function getCompanyAttribute(): ?string
+    {
+        return $this->user?->name ?? 'Employer';
+    }
+
+    public function getPostedByNameAttribute(): ?string
+    {
+        return $this->user?->name ?? 'Employer';
     }
 
     public function applicants(): HasMany

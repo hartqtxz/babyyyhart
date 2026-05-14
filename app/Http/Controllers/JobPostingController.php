@@ -10,9 +10,17 @@ class JobPostingController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(JobPosting::with('user')->get(), 200);
+        $query = JobPosting::with('user')
+            ->where('status', 'active')
+            ->latest();
+
+        if ($limit = $request->query('limit')) {
+            $query->limit((int) $limit);
+        }
+
+        return response()->json($query->get(), 200);
     }
 
     /**
@@ -53,7 +61,9 @@ class JobPostingController extends Controller
      */
     public function show(string $id)
     {
-        $job = JobPosting::with('user', 'applicants')->find($id);
+        $job = JobPosting::with('user', 'applicants')
+            ->where('status', 'active')
+            ->find($id);
         
         if (!$job) {
             return response()->json(['message' => 'Job not found'], 404);
